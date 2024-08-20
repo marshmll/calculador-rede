@@ -1,20 +1,21 @@
 def main():
     ip = input("Digite o endereço IP (no formato xxx.xxx.xxx.xxx): ")
     
-    if not validate_ip(ip):
+    while not validate_ip(ip):
         print("Endereço IP inválido.")
-        return
+        ip = input("Digite o endereço IP (no formato xxx.xxx.xxx.xxx): ")
     
     mask = input("Digite a máscara de subrede (no formato xxx.xxx.xxx.xxx): ")
 
-    if not validate_mask(mask):
+    while not validate_mask(mask):
         print("Máscara de sub rede inválida.")
-        return
+        mask = input("Digite a máscara de subrede (no formato xxx.xxx.xxx.xxx): ")
 
     [network_address, cidr]= calc_network(ip, mask)
     broadcast_address = calc_broadcast(ip, cidr)
     hosts = num_of_hosts(cidr)
     ips = list_network_ips(network_address, hosts, cidr)
+    range_of_use(network_address, cidr)
 
 
 def validate_ip(ip):
@@ -42,11 +43,18 @@ def validate_mask(mask):
     bits = to_bin(bytes)
 
     zero_end = False
+    no_zeros = True
     for bit in bits:
+        if bit == "0" and no_zeros:
+            no_zeros = False
+
         if bit == "1" and zero_end:
             return False
         elif bit == "0" and not zero_end:
             zero_end = True
+    
+    if no_zeros:
+        return False
 
     return True
         
@@ -117,7 +125,6 @@ def list_network_ips(network_address, hosts, cidr):
 
     for i in range (1, hosts + 1):
         available_ip_bin = network_subnet_segment
-
         available_ip_bin += to_bin([i], 32 - cidr)
 
         available_ip_address = ""
@@ -131,8 +138,43 @@ def list_network_ips(network_address, hosts, cidr):
         print(f"Endereço: {available_ip_address}")
 
 
-def range_of_use(ip):
-    pass
+def range_of_use(network_address, cidr):
+    ip_range = f"{network_address}/{cidr}"
+
+    print(f"Faixa de uso {ip_range}: ", end="")
+
+    if ip_range == "0.0.0.0/8":
+        print("Indica a rede local.")
+    elif ip_range == "10.0.0.0/8":
+        print("Endereçamento privado.")
+    elif ip_range == "127.0.0.0/8":
+        print("Endereçamento de realimentação (loopback).")
+    elif ip_range == "169.254.0.0/16":
+        print("Zeroconf/APIPA.")
+    elif ip_range == "172.16.0.0/12":
+        print("Endereçamento privado.")
+    elif ip_range == "192.0.0.0/24":
+        print("Reservado.")
+    elif ip_range == "192.0.2.0/24":
+        print("Documentação e exemplos.")
+    elif ip_range == "192.88.99.0/24":
+        print("6to4 (Mecanismo de transição de endereços IPv4 em IPv6).")
+    elif ip_range == "192.168.0.0/16":
+        print("Endereçamento privado.")
+    elif ip_range == "198.18.0.0/15":
+        print("Equipamentos para teste de rede.")
+    elif ip_range == "198.51.100.0/24":
+        print("Documentação e exemplos.")
+    elif ip_range == "203.0.113.0/24":
+        print("Documentação e exemplos.")
+    elif ip_range == "224.0.0.0/4":
+        print("Multicast (Classe D).")
+    elif ip_range == "240.0.0.0/4":
+        print("Reservado (Classe E).")
+    else:
+        print("Desconhecida.")
+
+    
 
 def to_bin(bytes, offset = 8):
     bits = ""
